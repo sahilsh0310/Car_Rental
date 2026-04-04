@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Car": {
+      "title": "Car",
+      "description": "A luxury vehicle available for rental.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "brand": { "type": "string" },
+        "type": { "type": "string", "enum": ["Sedan", "SUV", "Sports", "Luxury", "Convertible"] },
+        "pricePerDay": { "type": "number" },
+        "rating": { "type": "number" },
+        "image": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "specs": {
+          "type": "object",
+          "properties": {
+            "engine": { "type": "string" },
+            "seats": { "type": "number" },
+            "mileage": { "type": "string" },
+            "fuelType": { "type": "string" },
+            "transmission": { "type": "string" }
+          }
+        },
+        "description": { "type": "string" },
+        "isFeatured": { "type": "boolean" }
+      },
+      "required": ["name", "brand", "type", "pricePerDay", "image"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "A car rental reservation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "carId": { "type": "string" },
+        "pickupDate": { "type": "string", "format": "date-time" },
+        "dropoffDate": { "type": "string", "format": "date-time" },
+        "pickupLocation": { "type": "string" },
+        "totalPrice": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "confirmed", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "carId", "pickupDate", "dropoffDate", "totalPrice"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "wishlist": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/cars": {
+      "schema": "Car",
+      "description": "Collection of available cars."
+    },
+    "/bookings": {
+      "schema": "Booking",
+      "description": "Collection of user bookings."
+    },
+    "/users": {
+      "schema": "User",
+      "description": "Collection of user profiles."
+    }
+  }
+}

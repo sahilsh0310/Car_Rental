@@ -1,0 +1,7 @@
+{
+  "name": "DriveX - Premium Car Rental",
+  "description": "A luxury car rental platform featuring high-end vehicles, seamless booking, and a premium user experience.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
