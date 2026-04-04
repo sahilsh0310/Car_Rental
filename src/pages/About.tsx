@@ -1,7 +1,12 @@
 import { motion } from "motion/react";
 import { Shield, Zap, Clock, Globe, Award, Users } from "lucide-react";
+import { useEffect } from "react";
 
 export default function About() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

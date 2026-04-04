@@ -1,7 +1,12 @@
 import { motion } from "motion/react";
 import { Mail, Phone, MapPin, MessageSquare, Send, Clock } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Contact() {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}

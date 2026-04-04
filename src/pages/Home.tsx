@@ -1,10 +1,22 @@
 import Hero from "../components/Hero";
+import ImageMarquee from "../components/ImageMarquee";
 import FeaturedCars from "../components/FeaturedCars";
 import WhyChooseUs from "../components/WhyChooseUs";
 import Testimonials from "../components/Testimonials";
 import { motion } from "motion/react";
+import { useEffect, useRef } from "react";
 
 export default function Home() {
+  const marqueeRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const scrollToMarquee = () => {
+    marqueeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -12,7 +24,10 @@ export default function Home() {
       exit={{ opacity: 0 }}
       className="overflow-hidden"
     >
-      <Hero />
+      <Hero onWatchShowreel={scrollToMarquee} />
+      <div ref={marqueeRef}>
+        <ImageMarquee />
+      </div>
       <FeaturedCars />
       <WhyChooseUs />
       <Testimonials />

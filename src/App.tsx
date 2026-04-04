@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import { AuthProvider } from "./context/AuthContext";
 
 const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
 const Cars = lazy(() => import("./pages/Cars"));
 const CarDetails = lazy(() => import("./pages/CarDetails"));
 const Booking = lazy(() => import("./pages/Booking"));
@@ -21,6 +22,7 @@ export default function App() {
             <Suspense fallback={<LoadingScreen />}>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
                 <Route path="/cars" element={<Cars />} />
                 <Route path="/cars/:id" element={<CarDetails />} />
                 <Route path="/booking/:id" element={<Booking />} />

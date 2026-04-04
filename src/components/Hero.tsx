@@ -2,9 +2,13 @@ import { motion } from "motion/react";
 import { ArrowRight, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export default function Hero() {
+interface HeroProps {
+  onWatchShowreel?: () => void;
+}
+
+export default function Hero({ onWatchShowreel }: HeroProps) {
   return (
-    <section className="relative h-screen w-full overflow-hidden flex items-center justify-center pt-20">
+    <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
       {/* Background with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -50,22 +54,15 @@ export default function Hero() {
             Explore Fleet
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </Link>
-          <button className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-full font-bold flex items-center gap-2 transition-all backdrop-blur-md">
+          <button
+            onClick={onWatchShowreel}
+            className="px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white rounded-full font-bold flex items-center gap-2 transition-all backdrop-blur-md"
+          >
             <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center">
               <Play className="w-3 h-3 text-black fill-black ml-0.5" />
             </div>
             Watch Showreel
           </button>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-        >
-          <span className="text-[10px] uppercase font-bold tracking-widest text-gray-500">Scroll to explore</span>
-          <div className="w-px h-12 bg-gradient-to-b from-blue-500 to-transparent"></div>
         </motion.div>
       </div>
     </section>

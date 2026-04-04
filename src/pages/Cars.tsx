@@ -1,22 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Car } from "../types";
-import CarCard from "../components/CarCard";
-import AIRecommendation from "../components/AIRecommendation";
-import { motion, AnimatePresence } from "motion/react";
-import { Search, Filter, SlidersHorizontal, X } from "lucide-react";
-import { cn } from "../lib/utils";
+import { Link } from "react-router-dom";
+import { motion } from "motion/react";
 
 export default function Cars() {
   const [cars, setCars] = useState<Car[]>([]);
-  const [filteredCars, setFilteredCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState<string>("All");
-  const [priceRange, setPriceRange] = useState<number>(1000);
+  const blobsRef = useRef<(HTMLDivElement | null)[]>([]);
 
-  const carTypes = ["All", "Sedan", "SUV", "Sports", "Luxury", "Convertible"];
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -25,7 +22,6 @@ export default function Cars() {
         const snapshot = await getDocs(q);
         const carData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Car));
         setCars(carData);
-        setFilteredCars(carData);
       } catch (error) {
         console.error("Error fetching cars:", error);
       } finally {
@@ -35,147 +31,385 @@ export default function Cars() {
     fetchCars();
   }, []);
 
+  // Mouse parallax for blobs
   useEffect(() => {
-    let result = cars;
-    if (searchTerm) {
-      result = result.filter((car) => 
-        car.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        car.brand.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    if (selectedType !== "All") {
-      result = result.filter((car) => car.type === selectedType);
-    }
-    result = result.filter((car) => car.pricePerDay <= priceRange);
-    setFilteredCars(result);
-  }, [searchTerm, selectedType, priceRange, cars]);
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+
+      blobsRef.current.forEach((blob, index) => {
+        if (blob) {
+          const speed = (index + 1) * 15;
+          const offsetX = Math.min(Math.max(x * speed, -30), 30);
+          const offsetY = Math.min(Math.max(y * speed, -30), 30);
+          blob.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        }
+      });
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    return () => document.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  // Intersection observer for card reveal on scroll
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll(".car-card").forEach((card) => {
+      observer.observe(card);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#050505]"></div>;
+  }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="pt-32 pb-20 px-6 min-h-screen bg-[#0a0a0a]"
-    >
-      <div className="max-w-7xl mx-auto space-y-20">
-        <div className="space-y-4">
-          <h1 className="text-5xl md:text-7xl font-black tracking-tighter text-white">
-            OUR <span className="text-gray-600">FLEET</span>
-          </h1>
-          <p className="text-gray-400 max-w-2xl text-lg">
-            Choose from our curated selection of world-class vehicles. Each one is a masterpiece of engineering and luxury.
-          </p>
+    <>
+      <style>{`
+        :root {
+          --onyx-deep: #050505;
+          --onyx-surface: #0a0a0a;
+          --onyx-fluid: #121212;
+          --mercury: #e0e0e0;
+          --viscous-ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .cars-body {
+          background-color: var(--onyx-deep);
+          color: var(--mercury);
+          font-family: 'Inter', sans-serif;
+          min-height: 100vh;
+          animation: pageSlideIn 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+          width: 100%;
+        }
+
+        @keyframes pageSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pageFadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .liquid-bg {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          z-index: -1;
+          filter: blur(80px);
+          opacity: 0.6;
+          overflow: hidden;
+          pointer-events: none;
+        }
+
+        .blob {
+          position: absolute;
+          background: linear-gradient(45deg, #1a1a1a, #000);
+          border-radius: 50%;
+          animation: drift 20s infinite alternate var(--viscous-ease);
+        }
+
+        @keyframes drift {
+          from { transform: translate(-10%, -10%) scale(1); }
+          to { transform: translate(20%, 20%) scale(1.2); }
+        }
+
+        .cars-container {
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 80px 60px;
+          position: relative;
+          z-index: 5;
+          width: 100%;
+          overflow: visible;
+        }
+
+        .cars-h1 {
+          font-size: clamp(3rem, 8vw, 6rem);
+          font-weight: 800;
+          line-height: 0.9;
+          margin-bottom: 80px;
+          letter-spacing: -4px;
+          background: linear-gradient(180deg, #fff 0%, #333 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: textFadeIn 1s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+          opacity: 0;
+        }
+
+        @keyframes textFadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .car-grid {
+          display: grid;
+          grid-template-columns: repeat(12, 1fr);
+          gap: 60px 40px;
+          animation: gridFadeIn 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+          opacity: 0;
+        }
+
+        @keyframes gridFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        .car-card {
+          grid-column: span 6;
+          position: relative;
+          cursor: pointer;
+          transition: transform 0.6s var(--viscous-ease);
+          animation: cardSlideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+          opacity: 0;
+        }
+
+        .car-card:nth-child(1) { animation-delay: 0.1s; }
+        .car-card:nth-child(2) { animation-delay: 0.2s; }
+        .car-card:nth-child(3) { animation-delay: 0.3s; }
+        .car-card:nth-child(4) { animation-delay: 0.4s; }
+        .car-card:nth-child(5) { animation-delay: 0.5s; }
+        .car-card:nth-child(6) { animation-delay: 0.6s; }
+        .car-card:nth-child(n+7) { animation-delay: 0.7s; }
+
+        @keyframes cardSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .car-card.in-view {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        .car-card:nth-child(even) {
+          margin-top: 120px;
+        }
+
+        .image-wrapper {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 16/10;
+          background: #111;
+          border-radius: 2px;
+          overflow: hidden;
+          box-shadow: 0 50px 100px -20px rgba(0,0,0,0.5);
+        }
+
+        .image-wrapper-link {
+          display: block;
+          text-decoration: none;
+          position: relative;
+          cursor: pointer;
+        }
+
+        .image-wrapper-link::after {
+          content: 'VIEW SPEC';
+          position: absolute;
+          top: 40%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+          letter-spacing: 5px;
+          opacity: 0;
+          transition: all 0.4s ease;
+          pointer-events: none;
+          color: var(--mercury);
+          font-weight: 700;
+          z-index: 10;
+        }
+
+        .image-wrapper-link:hover::after {
+          opacity: 1;
+          top: 45%;
+        }
+
+        .image-wrapper img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          filter: grayscale(1) brightness(0.7);
+          transition: all 0.8s var(--viscous-ease);
+        }
+
+        .image-wrapper-link:hover .image-wrapper img {
+          transform: scale(1.05);
+          filter: grayscale(0) brightness(0.9);
+        }
+
+        .car-info {
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+        }
+
+        .car-title h3 {
+          font-size: 1.5rem;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: -1px;
+          margin-bottom: 10px;
+        }
+
+        .specs {
+          display: flex;
+          gap: 20px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.7rem;
+          color: #666;
+          text-transform: uppercase;
+        }
+
+        .specs span {
+          color: var(--mercury);
+        }
+
+        .book-btn {
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.1);
+          color: var(--mercury);
+          padding: 15px 30px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+          position: relative;
+          overflow: hidden;
+          transition: border-color 0.4s ease;
+          cursor: pointer;
+          text-decoration: none;
+          display: inline-block;
+        }
+
+        .book-btn::before {
+          content: '';
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: var(--mercury);
+          transition: transform 0.6s var(--viscous-ease);
+          z-index: -1;
+        }
+
+        .book-btn:hover {
+          color: var(--onyx-deep);
+          border-color: var(--mercury);
+        }
+
+        .book-btn:hover::before {
+          transform: translateY(-100%);
+        }
+
+        @media (max-width: 900px) {
+          .car-card { grid-column: span 12; }
+          .car-card:nth-child(even) { margin-top: 0; }
+          .cars-header { padding: 20px; }
+          .cars-container { padding: 40px 20px; }
+          .nav-links { display: none; }
+        }
+      `}</style>
+
+      <div className="cars-body">
+        <div className="liquid-bg">
+          <div
+            ref={(el) => blobsRef.current[0] = el}
+            className="blob"
+            style={{ width: "600px", height: "600px", top: "-100px", right: "-100px" }}
+          ></div>
+          <div
+            ref={(el) => blobsRef.current[1] = el}
+            className="blob"
+            style={{
+              width: "400px",
+              height: "400px",
+              bottom: "0",
+              left: "-100px",
+              background: "linear-gradient(45deg, #0a0a0a, #151515)",
+            }}
+          ></div>
         </div>
 
-        {/* AI Recommendation Section */}
-        {!loading && cars.length > 0 && (
-          <AIRecommendation allCars={cars} />
-        )}
+        <main className="cars-container">
+          <section>
+            <h1 className="cars-h1">Fluid<br />Dynamics</h1>
+          </section>
 
-        <div className="space-y-12">
-          {/* Filters & Search */}
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between bg-white/5 p-6 rounded-3xl border border-white/10 backdrop-blur-md">
-            <div className="relative w-full lg:w-96">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search by brand or model..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl pl-12 pr-4 py-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
-              />
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-              <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 no-scrollbar">
-                {carTypes.map((type) => (
-                  <button
-                    key={type}
-                    onClick={() => setSelectedType(type)}
-                    className={cn(
-                      "px-6 py-3 rounded-2xl text-xs font-bold transition-all whitespace-nowrap",
-                      selectedType === type
-                        ? "bg-blue-600 text-white"
-                        : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10"
-                    )}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-
-              <div className="flex items-center gap-4 bg-black/40 px-6 py-3 rounded-2xl border border-white/10 w-full lg:w-auto">
-                <SlidersHorizontal className="w-4 h-4 text-blue-500" />
-                <div className="flex-1 lg:w-48">
-                  <input
-                    type="range"
-                    min="100"
-                    max="1000"
-                    step="50"
-                    value={priceRange}
-                    onChange={(e) => setPriceRange(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                  />
-                </div>
-                <span className="text-xs font-bold text-white whitespace-nowrap">
-                  Max: ${priceRange}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Results Grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-[500px] bg-white/5 rounded-3xl animate-pulse"></div>
-              ))}
-            </div>
-          ) : (
-            <div className="space-y-8">
-              <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500 font-medium">
-                  Showing <span className="text-white">{filteredCars.length}</span> vehicles
-                </p>
-              </div>
-
-              <AnimatePresence mode="popLayout">
-                {filteredCars.length > 0 ? (
-                  <motion.div
-                    layout
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                  >
-                    {filteredCars.map((car) => (
-                      <CarCard key={car.id} car={car} />
-                    ))}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="py-20 text-center space-y-4"
-                  >
-                    <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto">
-                      <X className="w-10 h-10 text-gray-600" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-white">No vehicles found</h3>
-                    <p className="text-gray-500">Try adjusting your filters or search term.</p>
-                    <button
-                      onClick={() => {
-                        setSearchTerm("");
-                        setSelectedType("All");
-                        setPriceRange(1000);
+          <section className="car-grid">
+            {cars.map((car) => (
+              <article key={car.id} className="car-card">
+                <Link to={`/cars/${car.id}`} className="image-wrapper-link">
+                  <div className="image-wrapper">
+                    <img
+                      src={car.image}
+                      alt={car.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1200";
                       }}
-                      className="text-blue-500 font-bold hover:underline"
-                    >
-                      Clear all filters
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-        </div>
+                    />
+                  </div>
+                </Link>
+                <div className="car-info">
+                  <div className="car-title">
+                    <div className="specs">
+                      TYPE <span>{car.type}</span> • {new Date().getFullYear()}
+                    </div>
+                    <h3>{car.name}</h3>
+                    <div className="specs">
+                      BRAND <span>{car.brand}</span> • PRICE <span>${car.pricePerDay}/day</span>
+                    </div>
+                  </div>
+                  <Link to={`/booking/${car.id}`} className="book-btn">
+                    Book Drive
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </section>
+        </main>
       </div>
-    </motion.div>
+    </>
   );
 }

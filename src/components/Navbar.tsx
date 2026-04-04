@@ -1,34 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "motion/react";
-import { Car, User, Menu, X, LogIn } from "lucide-react";
-import { cn } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
-import { signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeLink, setActiveLink] = useState("Home");
+  const [time, setTime] = useState("");
+  const [status, setStatus] = useState("STABLE");
+  const [showNavbar, setShowNavbar] = useState(true);
   const location = useLocation();
-  const { user, profile } = useAuth();
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
-  };
-
-  const handleLogout = () => signOut(auth);
+  const { user } = useAuth();
 
   const navLinks = [
     { name: "Home", path: "/" },
@@ -37,121 +19,305 @@ export default function Navbar() {
     { name: "Contact", path: "/contact" },
   ];
 
+  // Update time and status
+  useEffect(() => {
+    const updateStream = () => {
+      const now = new Date();
+      const timeStr =
+        now.getHours().toString().padStart(2, "0") +
+        ":" +
+        now.getMinutes().toString().padStart(2, "0") +
+        ":" +
+        now.getSeconds().toString().padStart(2, "0");
+      const states = ["STABLE", "FLUID", "AERATED", "CALM"];
+      const randomState = states[Math.floor(Math.random() * states.length)];
+      setTime(timeStr);
+      setStatus(randomState);
+    };
+
+    updateStream();
+    const interval = setInterval(updateStream, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Set active link based on current path
+  useEffect(() => {
+    const current = navLinks.find((link) => link.path === location.pathname);
+    if (current) setActiveLink(current.name);
+  }, [location.pathname]);
+
+  // Scroll detection to hide navbar on home page and login page
+  useEffect(() => {
+    // Hide navbar on login page
+    if (location.pathname === "/login") {
+      setShowNavbar(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      // Only apply scroll hiding on home page
+      if (location.pathname === "/") {
+        const scrollPosition = window.scrollY;
+        // Hide navbar after scrolling past 100px (roughly past hero)
+        setShowNavbar(scrollPosition < 100);
+      } else {
+        // Always show navbar on other pages
+        setShowNavbar(true);
+      }
+    };
+
+    // Call once on mount
+    handleScroll();
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [location.pathname]);
+
+  const handleLogout = () => signOut(auth);
+
   return (
-    <nav
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 px-6 py-4",
-        isScrolled ? "bg-black/80 backdrop-blur-md border-b border-white/10 py-3" : "bg-transparent"
-      )}
-    >
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-            <Car className="text-white w-6 h-6" />
-          </div>
-          <span className="text-2xl font-bold tracking-tighter">
-            DRIVE<span className="text-blue-500">X</span>
-          </span>
-        </Link>
+    <>
+      <style>{`
+        :root {
+          --transition-fluid: cubic-bezier(0.23, 1, 0.32, 1);
+        }
 
-        {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={cn(
-                "text-sm font-medium transition-colors hover:text-blue-500",
-                location.pathname === link.path ? "text-blue-500" : "text-gray-400"
-              )}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
+        .nav-wrapper {
+          position: fixed !important;
+          top: 20px !important;
+          left: 50% !important;
+          transform: translateX(-50%) !important;
+          z-index: 9999 !important;
+          display: flex !important;
+          justify-content: center !important;
+          width: auto !important;
+          pointer-events: none !important;
+          opacity: 1;
+          transition: opacity 0.6s cubic-bezier(0.23, 1, 0.32, 1), 
+                      background-color 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                      border-color 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                      box-shadow 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                      pointer-events 0.4s ease;
+        }
 
-        <div className="hidden md:flex items-center gap-4">
-          {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-full border border-white/10">
-                <img src={user.photoURL || ""} alt="" className="w-6 h-6 rounded-full" />
-                <span className="text-xs font-medium">{user.displayName}</span>
-              </div>
-              <button
-                onClick={handleLogout}
-                className="text-xs text-gray-400 hover:text-white transition-colors"
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={handleLogin}
-              className="flex items-center gap-2 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-sm font-semibold transition-all hover:scale-105 active:scale-95"
-            >
-              <LogIn className="w-4 h-4" />
-              Sign In
-            </button>
-          )}
-        </div>
+        .nav-wrapper.hidden {
+          opacity: 0;
+          pointer-events: none !important;
+        }
 
-        {/* Mobile Menu Toggle */}
-        <button
-          className="md:hidden text-white"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? <X /> : <Menu />}
-        </button>
-      </div>
+        .nav-wrapper > * {
+          pointer-events: auto !important;
+        }
 
-      {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-full left-0 right-0 bg-black border-b border-white/10 p-6 md:hidden flex flex-col gap-4"
-          >
+        .porcelain-nav {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 12px;
+          background: #fdfdfd;
+          border-radius: 100px;
+          box-shadow: 
+            0 20px 40px -10px rgba(0, 0, 0, 0.1),
+            0 10px 20px -5px rgba(0, 0, 0, 0.1),
+            inset 0 2px 4px 0 rgba(255,255,255,1), 
+            inset 0 -2px 10px 0 rgba(0,0,0,0.02);
+          border: 1px solid rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(20px);
+          gap: 20px;
+          width: 100%;
+          white-space: nowrap;
+          transition: background-color 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                      border-color 0.6s cubic-bezier(0.23, 1, 0.32, 1),
+                      box-shadow 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .logo-section {
+          padding-left: 0;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          text-decoration: none;
+          cursor: pointer;
+          flex-shrink: 0;
+        }
+
+        .logo-mark {
+          width: 14px;
+          height: 14px;
+          background: #1a1a1a;
+          border-radius: 50%;
+          box-shadow: 0 0 0 4px rgba(0,0,0,0.03);
+          position: relative;
+        }
+
+        .logo-mark::after {
+          content: '';
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          width: 4px;
+          height: 4px;
+          background: white;
+          border-radius: 50%;
+        }
+
+        .logo-text {
+          font-size: 14px;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #1a1a1a;
+          font-weight: 600;
+          font-family: 'Outfit', sans-serif;
+        }
+
+        .nav-links {
+          display: flex;
+          list-style: none;
+          gap: 4px;
+        }
+
+        .nav-item {
+          position: relative;
+        }
+
+        .nav-link {
+          text-decoration: none;
+          color: rgba(0, 0, 0, 0.4);
+          font-size: 15px;
+          font-weight: 500;
+          padding: 12px 24px;
+          display: block;
+          transition: color 0.4s var(--transition-fluid);
+          position: relative;
+          z-index: 2;
+          cursor: pointer;
+        }
+
+        .fluid-bg {
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 40px;
+          transform: scale(0.85);
+          opacity: 0;
+          transition: all 0.5s var(--transition-fluid);
+          z-index: 1;
+        }
+
+        .nav-link:hover {
+          color: #1a1a1a;
+        }
+
+        .nav-link:hover + .fluid-bg {
+          transform: scale(1);
+          opacity: 1;
+        }
+
+        .nav-link.active {
+          color: #1a1a1a;
+        }
+
+        .nav-link.active::after {
+          content: '';
+          position: absolute;
+          bottom: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 4px;
+          height: 4px;
+          background: #1a1a1a;
+          border-radius: 50%;
+        }
+
+        .nav-actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding-right: 0;
+          flex-shrink: 0;
+        }
+
+        .data-stream {
+          font-family: 'Space Mono', monospace;
+          font-size: 11px;
+          color: rgba(0, 0, 0, 0.3);
+          background: rgba(0, 0, 0, 0.04);
+          padding: 6px 12px;
+          border-radius: 40px;
+          letter-spacing: -0.02em;
+        }
+
+        .action-button {
+          background: #1a1a1a;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 40px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: transform 0.3s var(--transition-fluid), box-shadow 0.3s var(--transition-fluid);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .action-button:hover {
+          transform: translateY(-1px) scale(1.02);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .action-button:active {
+          transform: translateY(0) scale(0.98);
+        }
+      `}</style>
+
+      <div className={`nav-wrapper ${!showNavbar ? "hidden" : ""}`}>
+        <nav className="porcelain-nav">
+          <Link to="/" className="logo-section">
+            <div className="logo-mark"></div>
+            <span className="logo-text">DRiveX</span>
+          </Link>
+
+          <ul className="nav-links">
             {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={cn(
-                  "text-lg font-medium",
-                  location.pathname === link.path ? "text-blue-500" : "text-gray-400"
-                )}
-              >
-                {link.name}
-              </Link>
+              <li key={link.path} className="nav-item">
+                <Link
+                  to={link.path}
+                  className={`nav-link ${activeLink === link.name ? "active" : ""}`}
+                  onMouseMove={(e) => {
+                    const target = e.currentTarget;
+                    const { offsetX, offsetY, clientWidth, clientHeight } = e.currentTarget as any;
+                    const xPos = (offsetX / clientWidth) - 0.5;
+                    const yPos = (offsetY / clientHeight) - 0.5;
+                    target.style.transform = `translate(${xPos * 6}px, ${yPos * 4}px)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as any).style.transform = "translate(0, 0)";
+                  }}
+                >
+                  {link.name}
+                </Link>
+                <div className="fluid-bg"></div>
+              </li>
             ))}
-            <hr className="border-white/10 my-2" />
+          </ul>
+
+          <div className="nav-actions">
             {user ? (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="text-left text-red-500 font-medium"
-              >
+              <button onClick={handleLogout} className="action-button">
                 Sign Out
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  handleLogin();
-                  setIsMobileMenuOpen(false);
-                }}
-                className="flex items-center gap-2 text-blue-500 font-medium"
-              >
-                <LogIn className="w-5 h-5" />
+              <Link to="/login" className="action-button" style={{textDecoration: "none", display: "inline-block"}}>
                 Sign In
-              </button>
+              </Link>
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </nav>
+          </div>
+        </nav>
+      </div>
+    </>
   );
 }
