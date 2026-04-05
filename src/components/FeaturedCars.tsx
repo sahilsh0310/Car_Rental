@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { collection, query, where, getDocs, limit } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Car } from "../types";
 import { Link } from "react-router-dom";
@@ -9,13 +9,32 @@ export default function FeaturedCars() {
   const [loading, setLoading] = useState(true);
   const cardsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Fisher-Yates shuffle
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const q = query(collection(db, "cars"), where("isFeatured", "==", true), limit(3));
-        const snapshot = await getDocs(q);
-        const carData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Car));
-        setCars(carData);
+        const snapshot = await getDocs(collection(db, "cars"));
+        const allCars = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Car));
+
+        const featured    = allCars.filter(c => c.isFeatured);
+        const nonFeatured = allCars.filter(c => !c.isFeatured);
+
+        // Shuffle both pools
+        const shuffledFeatured    = shuffle(featured);
+        const shuffledNonFeatured = shuffle(nonFeatured);
+
+        // Fill up to 3: featured first, then non-featured
+        const pick = [...shuffledFeatured, ...shuffledNonFeatured].slice(0, 3);
+        setCars(pick);
       } catch (error) {
         console.error("Error fetching featured cars:", error);
       } finally {
@@ -83,22 +102,25 @@ export default function FeaturedCars() {
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: #fff;
+          color: #00f2ff;
           text-decoration: none;
           font-weight: 700;
-          font-size: 0.9rem;
+          font-size: 0.75rem;
           text-transform: uppercase;
-          letter-spacing: 0.05em;
-          padding: 0.75rem 1.5rem;
-          border: 1px solid var(--obsidian-edge);
-          transition: var(--transition);
+          letter-spacing: 0.12em;
+          padding: 0.7rem 1.4rem;
+          border: 1px solid rgba(0,242,255,0.3);
           border-radius: 2px;
+          transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
+          font-family: 'JetBrains Mono', monospace;
+          background: rgba(0,242,255,0.04);
         }
 
         .view-all-btn:hover {
-          border-color: var(--magma-glow);
-          color: var(--magma-glow);
-          transform: translateX(4px);
+          border-color: #00f2ff;
+          background: rgba(0,242,255,0.1);
+          box-shadow: 0 0 18px rgba(0,242,255,0.15);
+          transform: translateX(3px);
         }
 
         .featured-header h2 {
@@ -167,8 +189,8 @@ export default function FeaturedCars() {
         }
 
         .plate-card:hover {
-          border-color: rgba(255, 77, 0, 0.3);
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+          border-color: rgba(0,242,255,0.25);
+          box-shadow: 0 20px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,242,255,0.08) inset;
         }
 
         .image-module {
@@ -284,24 +306,46 @@ export default function FeaturedCars() {
         }
 
         .btn-buy {
-          background: #fff;
-          color: #000;
+          background: #000;
+          color: #fff;
+          border: 1px solid rgba(0,242,255,0.25);
+          position: relative;
+          overflow: hidden;
         }
 
+        .btn-buy::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: #00f2ff;
+          transform: scaleY(0);
+          transform-origin: bottom;
+          transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+          z-index: 0;
+        }
+
+        .btn-buy span, .btn-buy { z-index: 1; }
+
         .btn-buy:hover {
-          background: var(--magma-glow);
-          color: #fff;
+          color: #000;
+          border-color: #00f2ff;
+        }
+
+        .btn-buy:hover::before {
+          transform: scaleY(1);
         }
 
         .btn-spec {
           background: var(--obsidian-plate);
-          color: var(--tectonic-silver);
+          color: rgba(255,255,255,0.35);
           font-family: 'JetBrains Mono', monospace;
+          border: none;
+          letter-spacing: 0.08em;
         }
 
         .btn-spec:hover {
-          background: var(--obsidian-edge);
-          color: #fff;
+          background: rgba(255,255,255,0.04);
+          color: #00f2ff;
         }
 
         @media (max-width: 1024px) {

@@ -21,6 +21,12 @@ export default function Booking() {
     pickupDate: "",
     dropoffDate: "",
     pickupLocation: "Los Angeles International Airport (LAX)",
+    driverName: "",
+    licenseNumber: "",
+    paymentMethod: "stripe", // stripe or crypto
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
   });
 
   // Scroll to top on mount
@@ -78,13 +84,18 @@ export default function Booking() {
       const bookingData: Omit<BookingType, "id"> = {
         userId: user.uid,
         carId: car.id,
+        carName: car.name,
+        carBrand: car.brand,
+        carImage: car.image,
         pickupDate: formData.pickupDate,
         dropoffDate: formData.dropoffDate,
         pickupLocation: formData.pickupLocation,
         totalPrice: calculateTotal(),
         status: "confirmed",
         createdAt: new Date().toISOString(),
-      };
+        paymentMethod: formData.paymentMethod,
+        driverName: formData.driverName || user?.displayName || "Unknown",
+      } as any; // Cast as any to bypass strict type for new fields
 
       await addDoc(collection(db, "bookings"), {
         ...bookingData,
@@ -417,6 +428,32 @@ export default function Booking() {
           cursor: not-allowed;
         }
 
+        /* Payment Selector */
+        .payment-options {
+          display: flex;
+          gap: 15px;
+        }
+
+        .payment-option {
+          flex: 1;
+          padding: 15px;
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 2px;
+          text-align: center;
+          cursor: pointer;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+          color: #666;
+          transition: all 0.3s ease;
+        }
+
+        .payment-option.active {
+          border-color: #00f2ff;
+          color: #00f2ff;
+          background: rgba(0,242,255,0.05);
+          box-shadow: 0 0 15px rgba(0,242,255,0.1);
+        }
+
         .summary-section {
           display: flex;
           flex-direction: column;
@@ -553,12 +590,12 @@ export default function Booking() {
       <div className="booking-body">
         <div className="liquid-bg">
           <div
-            ref={(el) => (blobsRef.current[0] = el)}
+            ref={(el) => { blobsRef.current[0] = el; }}
             className="blob"
             style={{ width: "600px", height: "600px", top: "-100px", right: "-100px" }}
           ></div>
           <div
-            ref={(el) => (blobsRef.current[1] = el)}
+            ref={(el) => { blobsRef.current[1] = el; }}
             className="blob"
             style={{
               width: "400px",
@@ -622,8 +659,92 @@ export default function Booking() {
                   <option value="San Francisco International Airport (SFO)">San Francisco International Airport (SFO)</option>
                   <option value="John F. Kennedy International Airport (JFK)">John F. Kennedy International Airport (JFK)</option>
                   <option value="Miami International Airport (MIA)">Miami International Airport (MIA)</option>
+                  <option value="Dubai International Airport (DXB)">Dubai International Airport (DXB)</option>
+                  <option value="Monaco Grand Prix Circuit (Helipad)">Monaco Grand Prix Circuit (Helipad)</option>
                 </select>
               </div>
+
+              {/* Driver Details */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label className="form-label">Driver Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.G. JAMES BOND"
+                    value={formData.driverName}
+                    onChange={(e) => setFormData({ ...formData, driverName: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">License Number</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="VALID DRIVER'S ID"
+                    value={formData.licenseNumber}
+                    onChange={(e) => setFormData({ ...formData, licenseNumber: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Details */}
+              <div className="form-group" style={{ marginTop: "20px" }}>
+                <label className="form-label">Payment Method</label>
+                <div className="payment-options">
+                  <div
+                    className={`payment-option ${formData.paymentMethod === "stripe" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, paymentMethod: "stripe" })}
+                  >
+                    Credit Card
+                  </div>
+                  <div
+                    className={`payment-option ${formData.paymentMethod === "crypto" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, paymentMethod: "crypto" })}
+                  >
+                    Crypto
+                  </div>
+                  <div
+                    className={`payment-option ${formData.paymentMethod === "cash" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, paymentMethod: "cash" })}
+                  >
+                    Cash
+                  </div>
+                </div>
+              </div>
+
+              {formData.paymentMethod === "stripe" && (
+                <div className="form-group" style={{ padding: "20px", border: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,0,0,0.3)" }}>
+                  <label className="form-label" style={{ color: "#00f2ff", marginBottom: "15px" }}>Secure Stripe Checkout Checkout</label>
+                  <div className="form-row" style={{ gap: "15px", marginBottom: "15px" }}>
+                    <div className="form-group" style={{ gridColumn: "span 2" }}>
+                      <input type="text" placeholder="CARD NUMBER (MOCK)" className="form-input" required value={formData.cardNumber} onChange={e => setFormData({...formData, cardNumber: e.target.value})} maxLength={16} />
+                    </div>
+                    <div className="form-group">
+                      <input type="text" placeholder="MM/YY" className="form-input" required value={formData.expiry} onChange={e => setFormData({...formData, expiry: e.target.value})} maxLength={5} />
+                    </div>
+                    <div className="form-group">
+                      <input type="text" placeholder="CVC" className="form-input" required value={formData.cvv} onChange={e => setFormData({...formData, cvv: e.target.value})} maxLength={3} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {formData.paymentMethod === "crypto" && (
+                <div className="form-group" style={{ padding: "20px", border: "1px dashed rgba(0,242,255,0.4)", background: "rgba(0,242,255,0.02)", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.8rem", color: "#00f2ff", marginBottom: "10px" }}>AWAITING BLOCKCHAIN TRANSFER</div>
+                  <div style={{ fontSize: "0.8rem", color: "#666" }}>A unique wallet address will be generated upon confirmation.</div>
+                </div>
+              )}
+
+              {formData.paymentMethod === "cash" && (
+                <div className="form-group" style={{ padding: "20px", border: "1px dashed rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.02)", textAlign: "center" }}>
+                  <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.8rem", color: "#fff", marginBottom: "10px" }}>PAY ON ARRIVAL</div>
+                  <div style={{ fontSize: "0.8rem", color: "#666" }}>Please have the exact cash amount ready upon vehicle pickup.</div>
+                </div>
+              )}
 
               <button
                 type="submit"

@@ -33,24 +33,55 @@ export default function Home() {
       <Testimonials />
       
       {/* Newsletter Section */}
-      <section className="py-32 px-6 bg-[#050505]">
-        <div className="max-w-4xl mx-auto text-center space-y-12 bg-gradient-to-br from-blue-600/20 to-transparent p-16 rounded-[40px] border border-white/5 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.1),transparent)] pointer-events-none"></div>
-          <div className="space-y-4 relative z-10">
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter text-white">
-              JOIN THE <span className="text-blue-500">INNER CIRCLE</span>
-            </h2>
-            <p className="text-gray-400 text-lg max-w-xl mx-auto">
-              Subscribe to our newsletter for exclusive offers, new fleet arrivals, and luxury travel insights.
-            </p>
-          </div>
-          <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto relative z-10">
+      <section style={{ padding: "6rem 1.5rem", background: "#030303" }}>
+        <div style={{
+          maxWidth: "860px", margin: "0 auto", textAlign: "center",
+          padding: "4rem 3rem",
+          background: "linear-gradient(135deg, rgba(0,242,255,0.04) 0%, transparent 60%)",
+          border: "1px solid rgba(0,242,255,0.12)",
+          borderRadius: "4px",
+          position: "relative", overflow: "hidden"
+        }}>
+          {/* corner accent */}
+          <div style={{ position: "absolute", top: 0, left: 0, width: "60px", height: "2px", background: "linear-gradient(90deg, #00f2ff, transparent)" }} />
+          <div style={{ position: "absolute", top: 0, left: 0, width: "2px", height: "60px", background: "linear-gradient(180deg, #00f2ff, transparent)" }} />
+
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#00f2ff", marginBottom: "1.5rem", opacity: 0.7 }}>
+            Inner Circle
+          </p>
+          <h2 style={{ fontSize: "clamp(2rem,5vw,3.5rem)", fontWeight: 900, letterSpacing: "-0.04em", color: "#f0f2f5", marginBottom: "1rem", lineHeight: 1 }}>
+            STAY IN THE<br /><span style={{ color: "#00f2ff" }}>FAST LANE</span>
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.9rem", maxWidth: "480px", margin: "0 auto 2.5rem", lineHeight: 1.6 }}>
+            Exclusive fleet drops, priority booking windows, and luxury travel insights — delivered to your inbox.
+          </p>
+          <form
+            style={{ display: "flex", flexDirection: "row", gap: "8px", maxWidth: "440px", margin: "0 auto" }}
+            onSubmit={e => e.preventDefault()}
+          >
             <input
               type="email"
-              placeholder="Enter your email"
-              className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-blue-500 transition-colors"
+              placeholder="your@email.com"
+              style={{
+                flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                padding: "12px 16px", color: "#fff", outline: "none", borderRadius: "2px",
+                fontFamily: "'JetBrains Mono', monospace", fontSize: "12px",
+                letterSpacing: "0.05em", transition: "border-color 0.2s",
+              }}
+              onFocus={e => (e.target.style.borderColor = "rgba(0,242,255,0.4)")}
+              onBlur={e => (e.target.style.borderColor = "rgba(255,255,255,0.08)")}
             />
-            <button className="px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl transition-all active:scale-95">
+            <button
+              style={{
+                background: "#00f2ff", border: "none", color: "#000",
+                padding: "12px 24px", fontFamily: "'JetBrains Mono', monospace",
+                fontSize: "11px", fontWeight: 700, textTransform: "uppercase",
+                letterSpacing: "0.12em", cursor: "pointer", borderRadius: "2px",
+                transition: "all 0.2s", whiteSpace: "nowrap",
+              }}
+              onMouseOver={e => { (e.target as HTMLButtonElement).style.background = "#40f8ff"; (e.target as HTMLButtonElement).style.boxShadow = "0 0 20px rgba(0,242,255,0.3)"; }}
+              onMouseOut={e => { (e.target as HTMLButtonElement).style.background = "#00f2ff"; (e.target as HTMLButtonElement).style.boxShadow = "none"; }}
+            >
               Subscribe
             </button>
           </form>

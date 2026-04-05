@@ -11,6 +11,8 @@ const CarDetails = lazy(() => import("./pages/CarDetails"));
 const Booking = lazy(() => import("./pages/Booking"));
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 
 export default function App() {
   return (
@@ -28,6 +30,8 @@ export default function App() {
                 <Route path="/booking/:id" element={<Booking />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/contact" element={<Contact />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/admin" element={<AdminPanel />} />
               </Routes>
             </Suspense>
           </main>
@@ -48,3 +52,4 @@ function LoadingScreen() {
     </div>
   );
 }
+

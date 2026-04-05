@@ -1,13 +1,15 @@
 import { useState, useEffect, useRef } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Car } from "../types";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 
 export default function Cars() {
+  const [allCars, setAllCars] = useState<Car[]>([]);
   const [cars, setCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedType, setSelectedType] = useState<string>("All");
   const blobsRef = useRef<(HTMLDivElement | null)[]>([]);
 
   // Scroll to top on mount
@@ -18,9 +20,11 @@ export default function Cars() {
   useEffect(() => {
     const fetchCars = async () => {
       try {
-        const q = query(collection(db, "cars"), orderBy("pricePerDay", "asc"));
-        const snapshot = await getDocs(q);
-        const carData = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Car));
+        const snapshot = await getDocs(collection(db, "cars"));
+        const carData = snapshot.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() } as Car))
+          .sort((a, b) => a.pricePerDay - b.pricePerDay);
+        setAllCars(carData);
         setCars(carData);
       } catch (error) {
         console.error("Error fetching cars:", error);
@@ -30,6 +34,15 @@ export default function Cars() {
     };
     fetchCars();
   }, []);
+
+  // Filter when type changes
+  useEffect(() => {
+    if (selectedType === "All") {
+      setCars(allCars);
+    } else {
+      setCars(allCars.filter(c => c.type === selectedType));
+    }
+  }, [selectedType, allCars]);
 
   // Mouse parallax for blobs
   useEffect(() => {
@@ -307,19 +320,20 @@ export default function Cars() {
 
         .book-btn {
           background: transparent;
-          border: 1px solid rgba(255,255,255,0.1);
-          color: var(--mercury);
-          padding: 15px 30px;
+          border: 1px solid rgba(0,242,255,0.2);
+          color: rgba(255,255,255,0.6);
+          padding: 14px 28px;
           font-family: 'JetBrains Mono', monospace;
-          font-size: 0.7rem;
+          font-size: 0.65rem;
           text-transform: uppercase;
-          letter-spacing: 2px;
+          letter-spacing: 0.12em;
           position: relative;
           overflow: hidden;
-          transition: border-color 0.4s ease;
+          transition: color 0.4s ease, border-color 0.4s ease;
           cursor: pointer;
           text-decoration: none;
           display: inline-block;
+          border-radius: 2px;
         }
 
         .book-btn::before {
@@ -329,14 +343,14 @@ export default function Cars() {
           left: 0;
           width: 100%;
           height: 100%;
-          background: var(--mercury);
-          transition: transform 0.6s var(--viscous-ease);
+          background: #00f2ff;
+          transition: transform 0.5s cubic-bezier(0.22,1,0.36,1);
           z-index: -1;
         }
 
         .book-btn:hover {
-          color: var(--onyx-deep);
-          border-color: var(--mercury);
+          color: #000;
+          border-color: #00f2ff;
         }
 
         .book-btn:hover::before {
@@ -349,6 +363,71 @@ export default function Cars() {
           .cars-header { padding: 20px; }
           .cars-container { padding: 40px 20px; }
           .nav-links { display: none; }
+        }
+
+        /* ═══ FILTER BAR ═══ */
+        .filter-bar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 60px;
+          align-items: center;
+        }
+
+        .filter-label {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.6rem;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: #333;
+          margin-right: 6px;
+          white-space: nowrap;
+        }
+
+        .filter-pill {
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.35);
+          padding: 7px 16px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.62rem;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          cursor: pointer;
+          border-radius: 2px;
+          transition: all 0.25s ease;
+          outline: none;
+        }
+
+        .filter-pill:hover {
+          border-color: rgba(0,242,255,0.35);
+          color: rgba(255,255,255,0.7);
+        }
+
+        .filter-pill.active {
+          border-color: #00f2ff;
+          color: #00f2ff;
+          background: rgba(0,242,255,0.07);
+          box-shadow: 0 0 12px rgba(0,242,255,0.12);
+        }
+
+        .filter-count {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.55rem;
+          color: #333;
+          margin-left: auto;
+          letter-spacing: 0.08em;
+        }
+
+        .no-results {
+          grid-column: span 12;
+          padding: 80px 0;
+          text-align: center;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.7rem;
+          text-transform: uppercase;
+          letter-spacing: 0.15em;
+          color: #222;
         }
       `}</style>
 
@@ -376,6 +455,21 @@ export default function Cars() {
           <section>
             <h1 className="cars-h1">Fluid<br />Dynamics</h1>
           </section>
+
+          {/* ── Filter Bar ── */}
+          <div className="filter-bar">
+            <span className="filter-label">Type //</span>
+            {["All", ...Array.from(new Set(allCars.map(c => c.type))).sort()].map(type => (
+              <button
+                key={type}
+                className={`filter-pill ${selectedType === type ? "active" : ""}`}
+                onClick={() => setSelectedType(type)}
+              >
+                {type}
+              </button>
+            ))}
+            <span className="filter-count">{cars.length} vehicle{cars.length !== 1 ? "s" : ""}</span>
+          </div>
 
           <section className="car-grid">
             {cars.map((car) => (

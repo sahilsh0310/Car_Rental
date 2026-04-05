@@ -22,6 +22,10 @@ export interface Booking {
   id: string;
   userId: string;
   carId: string;
+  // Snapshot fields stored at booking time for easy display
+  carName?: string;
+  carBrand?: string;
+  carImage?: string;
   pickupDate: string;
   dropoffDate: string;
   pickupLocation: string;
@@ -37,4 +41,17 @@ export interface UserProfile {
   photoURL?: string;
   role: "user" | "admin";
   wishlist?: string[];
+  phone?: string;
+  createdAt?: string;
 }
+
+export interface ContactMessage {
+  id?: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  createdAt: string;
+  status: "unread" | "read" | "replied";
+}
+

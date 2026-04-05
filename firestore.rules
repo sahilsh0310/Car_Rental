@@ -92,5 +92,11 @@ service cloud.firestore {
         request.resource.data.role == resource.data.role || isAdmin()
       );
     }
+
+    // Contact form messages — anyone can create, only admins can read/update/delete
+    match /messages/{messageId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }
