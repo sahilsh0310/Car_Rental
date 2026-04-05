@@ -361,8 +361,30 @@ export default function Cars() {
           .car-card { grid-column: span 12; }
           .car-card:nth-child(even) { margin-top: 0; }
           .cars-header { padding: 20px; }
-          .cars-container { padding: 40px 20px; }
+          .cars-container { padding: 40px 20px; padding-bottom: 140px; /* Space for mobile nav */ }
           .nav-links { display: none; }
+        }
+
+        @media (max-width: 768px) {
+          .cars-h1 {
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+          }
+          .car-grid {
+            gap: 40px 0;
+          }
+          .car-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+          }
+          .book-btn {
+            width: 100%;
+            text-align: center;
+          }
+          .filter-bar {
+            margin-bottom: 30px;
+          }
         }
 
         /* ═══ FILTER BAR ═══ */

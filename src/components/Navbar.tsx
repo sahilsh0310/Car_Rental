@@ -503,46 +503,115 @@ export default function Navbar() {
           transform: translateY(0) scale(0.98);
         }
 
+        .mobile-obsidian-nav {
+          display: none;
+        }
+
         @media (max-width: 768px) {
           .nav-wrapper {
-            width: 100vw !important;
-            padding: 0 10px !important;
+            display: none !important;
           }
-          .porcelain-nav {
-            width: 100%;
-            flex-wrap: wrap;
+          
+          .mobile-obsidian-nav {
+            display: flex;
+            position: fixed;
+            bottom: 24px;
+            left: 16px;
+            right: 16px;
+            background: #121214;
+            height: 84px;
+            border-radius: 28px;
+            align-items: center;
             justify-content: space-between;
-            gap: 10px;
-            padding: 10px 15px;
-            border-radius: 24px;
+            padding: 0 12px;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.08),
+                inset 0 -1px 1px rgba(0,0,0,0.5);
+            border: 1px solid rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            animation: slideUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+            backdrop-filter: blur(20px);
           }
-          .logo-text {
-            font-size: 12px;
-            letter-spacing: 0.05em;
+
+          @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
           }
-          .nav-links {
-            width: 100%;
-            order: 3;
+
+          .mob-nav-item {
+            position: relative;
+            flex: 1;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             justify-content: center;
-            flex-wrap: wrap;
-            border-top: 1px solid rgba(255,255,255,0.05);
-            padding-top: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s cubic-bezier(0.23, 1, 0.32, 1);
           }
-          .nav-link {
-            padding: 6px 10px;
-            font-size: 11px;
+          
+          .mob-nav-item:active { transform: scale(0.92); }
+          
+          .mob-icon-wrap {
+            width: 28px; height: 28px; position: relative;
+            display: flex; align-items: center; justify-content: center;
           }
-          .data-stream {
-            display: none;
+          
+          .mob-icon-wrap svg {
+            width: 20px; height: 20px; fill: none;
+            stroke: #64748b; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.8));
           }
-          .action-button {
-            padding: 8px 18px;
-            font-size: 12px;
+          
+          .mob-nav-item.active .mob-icon-wrap svg {
+            stroke: #00f2ff;
+            filter: drop-shadow(0 0 8px rgba(0, 242, 255, 0.4));
+            transform: translateY(-2px);
           }
-          .avatar-trigger {
-            width: 34px;
-            height: 34px;
+          
+          .mob-label {
+            font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px; color: #64748b; margin-top: 4px;
+            opacity: 0.6; transition: all 0.3s ease; text-decoration: none;
           }
+          
+          .mob-nav-item.active .mob-label { color: #00f2ff; opacity: 1; }
+          
+          .mob-avatar-recess {
+            width: 52px; height: 52px; background: #0a0a0c; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 2px 2px 5px rgba(0,0,0,0.8), inset -1px -1px 2px rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(255,255,255,0.03);
+            margin: 0 10px; position: relative; text-decoration: none;
+          }
+          
+          .mob-avatar-recess::after {
+            content: ''; position: absolute; inset: -4px; border-radius: 50%;
+            background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, transparent 50%, rgba(0,0,0,0.2) 100%);
+            pointer-events: none;
+          }
+          
+          .mob-avatar-img, .mob-avatar-text {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            border: 1px solid rgba(255,255,255,0.1); filter: grayscale(0.2) contrast(1.1);
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex; align-items: center; justify-content: center;
+            background: #111; color: #fff; font-family: 'Outfit'; font-size: 14px; font-weight: bold;
+          }
+          
+          .mob-avatar-recess:active .mob-avatar-img, .mob-avatar-recess:active .mob-avatar-text {
+            transform: scale(1.05) rotate(5deg);
+          }
+          
+          .mob-active-pill {
+            position: absolute; bottom: -10px; width: 4px; height: 4px; background: #00f2ff;
+            border-radius: 50%; box-shadow: 0 0 10px #00f2ff, 0 0 20px #00f2ff;
+            opacity: 0; transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+          }
+          
+          .mob-nav-item.active .mob-active-pill { opacity: 1; bottom: 6px; }
         }
       `}</style>
 
@@ -688,6 +757,50 @@ export default function Navbar() {
           </div>
         </nav>
       </div>
+
+      {/* ── MOBILE NAV: ETCHED RELIEF ── */}
+      <nav className="mobile-obsidian-nav">
+        <Link to="/" className={`mob-nav-item ${activeLink === "Home" ? "active" : ""}`}>
+          <div className="mob-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          </div>
+          <span className="mob-label">Index</span>
+          <div className="mob-active-pill"></div>
+        </Link>
+        <Link to="/cars" className={`mob-nav-item ${activeLink === "Fleet" ? "active" : ""}`}>
+          <div className="mob-icon-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+          <span className="mob-label">Fleet</span>
+          <div className="mob-active-pill"></div>
+        </Link>
+        
+        <Link to={user ? (profile?.role === "admin" ? "/admin" : "/dashboard") : "/login"} className="mob-avatar-recess">
+          {profile?.photoURL ? (
+            <img src={profile.photoURL} alt="Avatar" className="mob-avatar-img" />
+          ) : (
+            <div className="mob-avatar-text">
+              {(profile?.displayName?.[0] || user?.email?.[0] || "U").toUpperCase()}
+            </div>
+          )}
+        </Link>
+
+        <Link to="/about" className={`mob-nav-item ${activeLink === "About" ? "active" : ""}`}>
+          <div className="mob-icon-wrap">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
+          </div>
+          <span className="mob-label">About</span>
+          <div className="mob-active-pill"></div>
+        </Link>
+        
+        <Link to="/contact" className={`mob-nav-item ${activeLink === "Contact" ? "active" : ""}`}>
+          <div className="mob-icon-wrap">
+            <svg viewBox="0 0 24 24"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+          </div>
+          <span className="mob-label">Comms</span>
+          <div className="mob-active-pill"></div>
+        </Link>
+      </nav>
     </>
   );
 }
