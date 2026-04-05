@@ -502,7 +502,50 @@ export default function Navbar() {
         .action-button:active {
           transform: translateY(0) scale(0.98);
         }
+
+        @media (max-width: 768px) {
+          .nav-wrapper {
+            width: 100vw !important;
+            padding: 0 10px !important;
+          }
+          .porcelain-nav {
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 15px;
+            border-radius: 24px;
+          }
+          .logo-text {
+            font-size: 12px;
+            letter-spacing: 0.05em;
+          }
+          .nav-links {
+            width: 100%;
+            order: 3;
+            justify-content: center;
+            flex-wrap: wrap;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding-top: 8px;
+          }
+          .nav-link {
+            padding: 6px 10px;
+            font-size: 11px;
+          }
+          .data-stream {
+            display: none;
+          }
+          .action-button {
+            padding: 8px 18px;
+            font-size: 12px;
+          }
+          .avatar-trigger {
+            width: 34px;
+            height: 34px;
+          }
+        }
       `}</style>
+
 
       <div className={`nav-wrapper ${!showNavbar ? "hidden" : ""}`}>
         <nav className="porcelain-nav">
