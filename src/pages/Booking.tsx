@@ -23,10 +23,12 @@ export default function Booking() {
     pickupLocation: "Los Angeles International Airport (LAX)",
     driverName: "",
     licenseNumber: "",
-    paymentMethod: "stripe", // stripe or crypto
+    paymentMethod: "stripe", // stripe, crypto, cash, or upi
     cardNumber: "",
     expiry: "",
     cvv: "",
+    discountCode: "",
+    upiId: "",
   });
 
   // Scroll to top on mount
@@ -69,10 +71,13 @@ export default function Booking() {
     return () => document.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  const calculateTotal = () => {
-    if (!car || !formData.pickupDate || !formData.dropoffDate) return 0;
+  const getPricing = () => {
+    if (!car || !formData.pickupDate || !formData.dropoffDate) return { subtotal: 0, discount: 0, tax: 0, total: 0 };
     const days = Math.max(1, differenceInDays(parseISO(formData.dropoffDate), parseISO(formData.pickupDate)));
-    return days * car.pricePerDay;
+    const subtotal = days * car.pricePerDay;
+    const discount = formData.discountCode.toUpperCase() === "DRIVEX10" ? subtotal * 0.1 : 0;
+    const tax = (subtotal - discount) * 0.18;
+    return { subtotal, discount, tax, total: subtotal - discount + tax };
   };
 
   const handleBooking = async (e: React.FormEvent) => {
@@ -81,8 +86,10 @@ export default function Booking() {
 
     setBookingStatus("submitting");
     try {
+      const { discount, tax, total } = getPricing();
       const bookingData: Omit<BookingType, "id"> = {
         userId: user.uid,
+        userEmail: user.email || "unknown@domain.com",
         carId: car.id,
         carName: car.name,
         carBrand: car.brand,
@@ -90,7 +97,9 @@ export default function Booking() {
         pickupDate: formData.pickupDate,
         dropoffDate: formData.dropoffDate,
         pickupLocation: formData.pickupLocation,
-        totalPrice: calculateTotal(),
+        totalPrice: total,
+        discountAmount: discount,
+        taxAmount: tax,
         status: "confirmed",
         createdAt: new Date().toISOString(),
         paymentMethod: formData.paymentMethod,
@@ -712,6 +721,27 @@ export default function Booking() {
                   >
                     Cash
                   </div>
+                  <div
+                    className={`payment-option ${formData.paymentMethod === "upi" ? "active" : ""}`}
+                    onClick={() => setFormData({ ...formData, paymentMethod: "upi" })}
+                  >
+                    UPI
+                  </div>
+                </div>
+              </div>
+
+              {/* Discount Code */}
+              <div className="form-group" style={{ marginTop: "10px" }}>
+                <label className="form-label text-[#00f2ff]">Discount Code</label>
+                <div style={{ display: "flex", gap: "15px" }}>
+                  <input
+                    type="text"
+                    placeholder="E.G. DRIVEX10"
+                    value={formData.discountCode}
+                    onChange={(e) => setFormData({ ...formData, discountCode: e.target.value })}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
                 </div>
               </div>
 
@@ -743,6 +773,20 @@ export default function Booking() {
                 <div className="form-group" style={{ padding: "20px", border: "1px dashed rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.02)", textAlign: "center" }}>
                   <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "0.8rem", color: "#fff", marginBottom: "10px" }}>PAY ON ARRIVAL</div>
                   <div style={{ fontSize: "0.8rem", color: "#666" }}>Please have the exact cash amount ready upon vehicle pickup.</div>
+                </div>
+              )}
+
+              {formData.paymentMethod === "upi" && (
+                <div className="form-group" style={{ padding: "20px", border: "1px solid rgba(255,255,255,0.05)", background: "rgba(0,242,255,0.02)" }}>
+                  <label className="form-label" style={{ color: "#00f2ff", marginBottom: "15px" }}>Pay with UPI</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="E.G. user@okhdfcbank"
+                    className="form-input"
+                    value={formData.upiId}
+                    onChange={(e) => setFormData({ ...formData, upiId: e.target.value })}
+                  />
                 </div>
               )}
 
@@ -792,14 +836,26 @@ export default function Booking() {
                 </span>
               </div>
 
+              {getPricing().discount > 0 && (
+                <div className="summary-line">
+                  <span className="summary-label" style={{ color: "#00f2ff" }}>Discount ({formData.discountCode})</span>
+                  <span className="summary-value" style={{ color: "#00f2ff" }}>-{formatCurrency(getPricing().discount)}</span>
+                </div>
+              )}
+
               <div className="summary-line">
                 <span className="summary-label">Insurance (Premium)</span>
                 <span className="summary-value" style={{ color: "#4ade80" }}>Included</span>
               </div>
+              
+              <div className="summary-line">
+                <span className="summary-label">Taxes (18% GST)</span>
+                <span className="summary-value">{formatCurrency(getPricing().tax)}</span>
+              </div>
 
               <div className="total-price">
                 <span>Total</span>
-                <span>{formatCurrency(calculateTotal())}</span>
+                <span>{formatCurrency(getPricing().total)}</span>
               </div>
             </div>
 

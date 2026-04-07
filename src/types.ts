@@ -21,6 +21,7 @@ export interface Car {
 export interface Booking {
   id: string;
   userId: string;
+  userEmail?: string;
   carId: string;
   // Snapshot fields stored at booking time for easy display
   carName?: string;
@@ -30,6 +31,10 @@ export interface Booking {
   dropoffDate: string;
   pickupLocation: string;
   totalPrice: number;
+  discountAmount?: number;
+  taxAmount?: number;
+  driverName?: string;
+  paymentMethod?: string;
   status: "pending" | "confirmed" | "completed" | "cancelled";
   createdAt: string;
 }

@@ -739,12 +739,13 @@ export default function AdminPanel() {
                     </div>
                     <table className="ap-tbl">
                       <thead><tr>
-                        <th>Vehicle</th><th>Pickup</th><th>Drop-off</th><th>Location</th><th>Total</th><th>Status</th>
+                        <th>Vehicle</th><th>Email</th><th>Pickup</th><th>Drop-off</th><th>Location</th><th>Total</th><th>Status</th>
                       </tr></thead>
                       <tbody>
                         {bookings.slice(0, 8).map(b => (
                           <tr key={b.id}>
                             <td><strong>{b.carName || "—"}</strong><span className="sub">{b.carBrand || "Unknown"}</span></td>
+                            <td><span className="sub" style={{ textTransform: "none", color: "#f0f2f5" }}>{b.userEmail || b.driverName || "—"}</span></td>
                             <td><span className="sub">{b.pickupDate ? format(parseISO(b.pickupDate), "MMM d, yy") : "—"}</span></td>
                             <td><span className="sub">{b.dropoffDate ? format(parseISO(b.dropoffDate), "MMM d, yy") : "—"}</span></td>
                             <td><span className="sub">{b.pickupLocation || "—"}</span></td>
@@ -823,7 +824,7 @@ export default function AdminPanel() {
                   {bookings.length === 0 && <div className="ap-empty">No bookings yet.</div>}
                   <table className="ap-tbl">
                     <thead><tr>
-                      <th>Vehicle</th><th>User ID</th><th>Pickup</th><th>Drop-off</th><th>Location</th><th>Total</th><th>Status</th>
+                      <th>Vehicle</th><th>User Email</th><th>Pickup</th><th>Drop-off</th><th>Location</th><th>Total</th><th>Status</th>
                     </tr></thead>
                     <tbody>
                       {bookings.map(b => (
@@ -832,7 +833,7 @@ export default function AdminPanel() {
                             <strong>{b.carName || "—"}</strong>
                             <span className="sub">{b.carBrand}</span>
                           </td>
-                          <td><span className="sub">{b.userId.slice(0, 10)}…</span></td>
+                          <td><span className="sub" style={{ textTransform: "none" }}>{b.userEmail || b.driverName || "—"}</span></td>
                           <td><span className="sub">{b.pickupDate ? format(parseISO(b.pickupDate), "MMM d, yy") : "—"}</span></td>
                           <td><span className="sub">{b.dropoffDate ? format(parseISO(b.dropoffDate), "MMM d, yy") : "—"}</span></td>
                           <td><span className="sub">{b.pickupLocation || "—"}</span></td>
