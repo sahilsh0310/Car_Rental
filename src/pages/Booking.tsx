@@ -7,6 +7,116 @@ import { CheckCircle2, ArrowLeft } from "lucide-react";
 import { formatCurrency } from "../lib/utils";
 import { useAuth } from "../context/AuthContext";
 import { differenceInDays, parseISO } from "date-fns";
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import L from "leaflet";
+// @ts-ignore
+import icon from "leaflet/dist/images/marker-icon.png";
+// @ts-ignore
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const LocationPicker = ({ location, setLocation, defaultCenter }: { location: string, setLocation: (loc: string) => void, defaultCenter: [number, number] }) => {
+  const [position, setPosition] = useState<{lat: number, lng: number} | null>(null);
+
+  const MapEvents = () => {
+    useMapEvents({
+      click(e) {
+        handleLocation(e.latlng);
+      },
+      locationfound(e) {
+        handleLocation(e.latlng);
+        const map = e.target;
+        map.flyTo(e.latlng, map.getZoom());
+      },
+      locationerror(e) {
+        alert("Location access denied or unavailable. Please ensure you have granted location permissions within your browser settings.");
+      }
+    });
+
+    const handleLocation = (latlng: any) => {
+      setPosition(latlng);
+      setLocation("Loading map data...");
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}`, {
+        headers: { 'User-Agent': 'CarRentalApp/1.0' }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.display_name) {
+            setLocation(data.display_name);
+          } else {
+            setLocation(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`);
+          }
+        })
+        .catch(() => setLocation(`${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}`));
+    };
+
+    return null;
+  };
+
+  const LocateControl = () => {
+    const map = useMap();
+    const btnRef = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+      if (btnRef.current) {
+        L.DomEvent.disableClickPropagation(btnRef.current);
+      }
+    }, []);
+    return (
+      <button
+        ref={btnRef}
+        type="button"
+        title="Find my location"
+        onClick={(e) => {
+          e.preventDefault();
+          map.locate({ setView: true, maxZoom: 16 });
+        }}
+        style={{
+          position: 'absolute',
+          top: '10px',
+          right: '10px',
+          zIndex: 1000,
+          background: '#0c0f14',
+          border: '1px solid rgba(0,242,255,0.4)',
+          color: '#00f2ff',
+          padding: '8px 12px',
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontFamily: "'JetBrains Mono', monospace",
+          fontSize: '10px',
+          textTransform: 'uppercase',
+          boxShadow: '0 4px 6px rgba(0,0,0,0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px'
+        }}
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+        LOCATE ME
+      </button>
+    );
+  };
+
+  return (
+    <div style={{ height: "300px", width: "100%", marginTop: "15px", borderRadius: "4px", overflow: "hidden", zIndex: 0, position: "relative" }}>
+      <MapContainer center={defaultCenter} zoom={13} style={{ height: "100%", width: "100%" }}>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        {position && <Marker position={position} />}
+        <MapEvents />
+        <LocateControl />
+      </MapContainer>
+    </div>
+  );
+};
 
 export default function Booking() {
   const { id } = useParams();
@@ -17,10 +127,13 @@ export default function Booking() {
   const [bookingStatus, setBookingStatus] = useState<"idle" | "submitting" | "success">("idle");
   const blobsRef = useRef<(HTMLDivElement | null)[]>([]);
 
+  const initDate = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([34.0522, -118.2437]);
+
   const [formData, setFormData] = useState({
-    pickupDate: "",
+    pickupDate: initDate,
     dropoffDate: "",
-    pickupLocation: "Los Angeles International Airport (LAX)",
+    pickupLocation: "",
     driverName: "",
     licenseNumber: "",
     paymentMethod: "stripe", // stripe, crypto, cash, or upi
@@ -638,7 +751,7 @@ export default function Booking() {
                 <div className="form-group">
                   <label className="form-label">Pickup Date</label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     required
                     value={formData.pickupDate}
                     onChange={(e) => setFormData({ ...formData, pickupDate: e.target.value })}
@@ -648,7 +761,7 @@ export default function Booking() {
                 <div className="form-group">
                   <label className="form-label">Dropoff Date</label>
                   <input
-                    type="date"
+                    type="datetime-local"
                     required
                     value={formData.dropoffDate}
                     onChange={(e) => setFormData({ ...formData, dropoffDate: e.target.value })}
@@ -659,18 +772,19 @@ export default function Booking() {
 
               <div className="form-group">
                 <label className="form-label">Pickup Location</label>
-                <select
+                <input
+                  type="text"
+                  required
+                  placeholder="CLICK MAP OR TYPE ADDRESS"
                   value={formData.pickupLocation}
                   onChange={(e) => setFormData({ ...formData, pickupLocation: e.target.value })}
-                  className="form-select"
-                >
-                  <option value="Los Angeles International Airport (LAX)">Los Angeles International Airport (LAX)</option>
-                  <option value="San Francisco International Airport (SFO)">San Francisco International Airport (SFO)</option>
-                  <option value="John F. Kennedy International Airport (JFK)">John F. Kennedy International Airport (JFK)</option>
-                  <option value="Miami International Airport (MIA)">Miami International Airport (MIA)</option>
-                  <option value="Dubai International Airport (DXB)">Dubai International Airport (DXB)</option>
-                  <option value="Monaco Grand Prix Circuit (Helipad)">Monaco Grand Prix Circuit (Helipad)</option>
-                </select>
+                  className="form-input"
+                />
+                <LocationPicker 
+                  location={formData.pickupLocation} 
+                  setLocation={(loc) => setFormData({ ...formData, pickupLocation: loc })} 
+                  defaultCenter={mapCenter}
+                />
               </div>
 
               {/* Driver Details */}

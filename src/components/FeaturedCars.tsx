@@ -3,6 +3,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Car } from "../types";
 import { Link } from "react-router-dom";
+import { formatCurrency } from "../lib/utils";
 
 export default function FeaturedCars() {
   const [cars, setCars] = useState<Car[]>([]);
@@ -403,7 +404,7 @@ export default function FeaturedCars() {
                   </div>
                   <div className="spec-item">
                     <span className="spec-label">Price/Day</span>
-                    <span className="spec-value">${car.pricePerDay}</span>
+                    <span className="spec-value">{formatCurrency(car.pricePerDay)}</span>
                   </div>
                   <div className="spec-item">
                     <span className="spec-label">Transmission</span>

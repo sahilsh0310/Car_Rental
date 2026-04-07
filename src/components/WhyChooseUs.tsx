@@ -31,13 +31,30 @@ export default function WhyChooseUs() {
     if (!carStage) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      const x = (window.innerWidth / 2 - e.pageX) / 150;
-      const y = (window.innerHeight / 2 - e.pageY) / 150;
-      carStage.style.transform = `perspective(1000px) rotateY(${-15 + x}deg) rotateX(${y}deg)`;
+      const rect = carStage.getBoundingClientRect();
+      // Calculate center of the actual image stage within the viewport
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+      
+      // Calculate delta to center
+      const deltaX = (centerX - e.clientX) / 80;
+      const deltaY = (centerY - e.clientY) / 80;
+
+      // Pure dynamic tilt starting from 0
+      carStage.style.transform = `perspective(1000px) rotateY(${deltaX}deg) rotateX(${deltaY}deg) scale(1.02)`;
+    };
+
+    const handleMouseLeave = () => {
+      carStage.style.transform = `perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1)`;
     };
 
     document.addEventListener("mousemove", handleMouseMove);
-    return () => document.removeEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseleave", handleMouseLeave);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseleave", handleMouseLeave);
+    };
   }, []);
 
   return (
@@ -193,20 +210,22 @@ export default function WhyChooseUs() {
 
         .car-container {
           position: relative;
-          width: 120%;
-          transform: perspective(1000px) rotateY(-15deg);
+          width: 100%;
           transition: 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+          border-radius: 4px;
+          overflow: hidden;
+          box-shadow: 0 0 50px rgba(112, 0, 255, 0.15);
         }
 
         .car-container:hover {
-          transform: perspective(1000px) rotateY(-5deg) scale(1.05);
+          box-shadow: 0 0 80px rgba(112, 0, 255, 0.25);
         }
 
         .main-car-img {
           width: 100%;
-          height: auto;
-          filter: drop-shadow(0 0 50px rgba(112, 0, 255, 0.2));
-          mask-image: linear-gradient(to right, black 85%, transparent 100%);
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
 
         .prismatic-fluid {

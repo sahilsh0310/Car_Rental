@@ -3,6 +3,7 @@ import ImageMarquee from "../components/ImageMarquee";
 import FeaturedCars from "../components/FeaturedCars";
 import WhyChooseUs from "../components/WhyChooseUs";
 import Testimonials from "../components/Testimonials";
+import CanvasScrollVideo from "../components/CanvasScrollVideo";
 import { motion } from "motion/react";
 import { useEffect, useRef } from "react";
 
@@ -28,6 +29,7 @@ export default function Home() {
       <div ref={marqueeRef}>
         <ImageMarquee />
       </div>
+      <CanvasScrollVideo />
       <FeaturedCars />
       <WhyChooseUs />
       <Testimonials />

@@ -4,6 +4,7 @@ import { db } from "../lib/firebase";
 import { Car } from "../types";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
+import { formatCurrency } from "../lib/utils";
 
 export default function Cars() {
   const [allCars, setAllCars] = useState<Car[]>([]);
@@ -514,7 +515,7 @@ export default function Cars() {
                     </div>
                     <h3>{car.name}</h3>
                     <div className="specs">
-                      BRAND <span>{car.brand}</span> • PRICE <span>${car.pricePerDay}/day</span>
+                      BRAND <span>{car.brand}</span> • PRICE <span>{formatCurrency(car.pricePerDay)}/day</span>
                     </div>
                   </div>
                   <Link to={`/booking/${car.id}`} className="book-btn">
