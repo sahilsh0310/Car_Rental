@@ -13,7 +13,7 @@ const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-
+ 
 export default function App() {
   return (
     <AuthProvider>

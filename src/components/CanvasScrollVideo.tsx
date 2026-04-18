@@ -43,7 +43,7 @@ export default function CanvasScrollVideo() {
           pin: true,
           scrub: 3, // Significantly heavier 3s smoothing mapped to mitigate missing MP4 keyframes
           start: 'top top',
-          end: '+=4000', // Provides 4000px of deep scrolling length
+          end: '+=1333', // Decreased to ~1333px for a 3x faster scroll
         }
       });
 
