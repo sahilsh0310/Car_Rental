@@ -77,3 +77,14 @@ Navigate to `http://localhost:3000` to view the application.
 
 ---
 *SYS.OPTIMAL // END OF LINE*
+
+
+
+## 📝 Roadmap
+
+- [ ] Implementation of full Firebase Admin Node.js bindings.
+- [ ] Linking mock-Stripe UI elements to a secure backend webhook flow.
+- [ ] Porting the "Etched Relief" CSS structure into a React Native framework for the App Store.
+
+---
+*SYS.OPTIMAL // END OF LINE*
